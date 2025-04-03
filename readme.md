@@ -6,9 +6,8 @@ This module provides easy access to the database in python.
 
 ## Install
 
-- Clone `acorg/databases`.
-- cd into `databases/lib/py`
-- `pip setup.py install` or `pip setup.py develop` if you want to be making changes `acorgdb.py`.
+Clone and cd into `acorg/acorgdb` then `pip install .` (`pip install -e .[dev]`
+if you want to make changes.)
 
 ## Example usage
 
