@@ -1,0 +1,9 @@
+acorgdb/__pycache__
+acorgdb.egg-info
+*.pyc
+__pycache__/
+.pytest_cache/
+dist/
+build/
+.DS_Store
+.vscode
