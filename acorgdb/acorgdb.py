@@ -189,7 +189,7 @@ class Antigen(Record):
             return next(
                 alt for alt in self.alterations if alt.gene == gene_name.upper()
             ).parent_id
-        except (TypeError, AttributeError):
+        except (TypeError, AttributeError, StopIteration):
             return None
 
     def alt_parent(self, gene_name: str = "HA") -> Union["Antigen", None]:
