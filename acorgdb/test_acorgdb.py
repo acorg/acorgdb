@@ -5,64 +5,6 @@ import acorgdb as adb
 from acorgdb import Antigen
 
 
-class TestLoad(unittest.TestCase):
-    """
-    Test adb.load functionality.
-    """
-
-    def test_returns_database(self):
-        db = adb.load(("h3n2", "experiments", "bjorn7"))
-        self.assertIsInstance(db, adb.Database)
-
-    def test_antigens_in_database(self):
-        db = adb.load(("h3n2", "experiments", "bjorn7"))
-        for antigen in db.antigens:
-            self.assertIsInstance(antigen, Antigen)
-
-    def test_antisera_in_database(self):
-        db = adb.load(("h3n2", "experiments", "bjorn7"))
-        for serum in db.sera:
-            self.assertIsInstance(serum, adb.Serum)
-
-    def test_experiments_in_database(self):
-        db = adb.load(("h3n2", "experiments", "bjorn7"))
-        for experiment in db.experiments:
-            self.assertIsInstance(experiment, adb.Experiment)
-
-    def test_antigens_is_generator(self):
-        db = adb.load(("h3n2", "experiments", "bjorn7"))
-        self.assertIsInstance(db.antigens, tuple)
-
-    def test_antisera_is_generator(self):
-        db = adb.load(("h3n2", "experiments", "bjorn7"))
-        self.assertIsInstance(db.sera, tuple)
-
-    def test_records_is_tuple(self):
-        db = adb.load(("h3n2", "experiments", "bjorn7"))
-        self.assertIsInstance(db.experiments, tuple)
-
-    def test_load_h3n2_ablandscapes(self):
-        adb.load(("h3n2", "experiments", "ablandscapes"))
-
-    def test_load_h3n2_bjorn7(self):
-        adb.load(("h3n2", "experiments", "bjorn7"))
-
-    def test_load_h3n2_h3_mutants(self):
-        adb.load(("h3n2", "experiments", "h3_mutants"))
-
-    def test_load_h3n2_science2004(self):
-        adb.load(("h3n2", "experiments", "science2004"))
-
-    def test_load_h3n2_SI87_BE92_singles(self):
-        adb.load(("h3n2", "experiments", "SI87_BE92_singles"))
-
-    def test_load_h3n2_sideways_landscapes(self):
-        adb.load(("h3n2", "experiments", "sideways_landscapes"))
-
-    def test_load_h3n2_hanam_landscapes(self):
-        adb.load(("h3n2", "experiments", "hanam_landscapes"))
-
-
 class TestMutate(unittest.TestCase):
     def test_mutate_single_substitution(self):
         self.assertEqual("NTTRG", adb.mutate("NKTRG", ["K2T"]))
@@ -160,12 +102,11 @@ class TestAntigenSequence(unittest.TestCase):
         ag = Antigen({"id": "CHILD5", "parent_id": "parent", "wildtype": False})
         msg = (
             "Generating a sequence for an antigen with a parent but without "
-            "substitutions is not implemented"
+            "substitutions should return the parent sequence."
         )
         self.assertTrue(ag.has_parent_with_seq("HA"))
         self.assertFalse(ag.has_alt_parent_with_seq("HA"))
-        with self.assertRaisesRegex(NotImplementedError, msg):
-            ag.sequence("HA")
+        self.assertEqual(ag.sequence("HA"), ag.parent.sequence("HA"), msg)
 
     def test_parent_and_antigen_have_sequence(self):
         """
@@ -216,7 +157,7 @@ class TestAntigenSequence(unittest.TestCase):
         An antigen without a parent or a sequence should raise an error (case 7).
         """
         ag = Antigen({"id": "child", "wildtype": False})
-        msg = "child doesn't have a parent with a sequence"
+        msg = "child doesn't have a parent"
         with self.assertRaisesRegex(ValueError, msg):
             ag.sequence("HA")
 

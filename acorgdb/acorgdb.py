@@ -8,27 +8,15 @@ import random
 from string import ascii_uppercase
 import csv
 import re
-from pathlib import Path
 from typing import Generator, Iterable, Optional, Callable, Union
 from functools import reduce
 
 import pandas as pd
 
-import acorgdb
 
 aRepr = Repr()
 aRepr.maxstring = 100
 repr = aRepr.repr
-
-MODULE_DIR = os.path.dirname(acorgdb.__file__)
-ROOT_DIR = os.path.join(MODULE_DIR, "..", "..", "..")
-
-
-MODULE_DIR = Path(acorgdb.__file__).parent
-DB_ROOT_DIR = MODULE_DIR.parent.parent.parent
-
-ANTIGEN_JSONS = tuple(DB_ROOT_DIR.rglob("antigens.json"))
-SERA_JSONS = tuple(DB_ROOT_DIR.rglob("sera.json"))
 
 
 class CantGenerateSequenceError(Exception):
@@ -290,12 +278,15 @@ class Antigen(Record):
             ) and not self.has_parent_with_seq(gene):
                 raise ValueError(f"{self.id} doesn't have a parent with a sequence")
 
-            elif (
+            # If the antigen doesn't have any substitutions, but has a parent
+            # (or alteration parent) with a sequence, then return the parent sequence
+            elif not has_subs and (
                 self.has_alt_parent_with_seq(gene) or self.has_parent_with_seq(gene)
-            ) and not has_subs:
-                raise NotImplementedError(
-                    "Generating a sequence for an antigen with a parent but without "
-                    f"substitutions is not implemented:\n{self}"
+            ):
+                return (
+                    self.alt_parent(gene).sequence(gene)
+                    if self.has_alt_parent_with_seq(gene)
+                    else self.parent.sequence(gene)
                 )
 
             else:
@@ -575,30 +566,6 @@ def print_csv_as_json(path):
     print(json.dumps(data, indent=4))
 
 
-def search_db(pattern, db_path, re_flags=0):
-    """
-    Look at top level values of items in db_path and yield those that match
-    pattern.
-
-    Args:
-        pattern (str): Regular expression pattern. E.g.: r'england/496/1980'
-        db_path (tuple): Path to JSON file from root directory. E.g.:
-            ("h3", "antigens.json")
-        re_flags: See flags argument of functions in the in re standard library.
-            E.g. re.IGNORECASE or re.I.
-
-    Returns:
-        generator
-    """
-    with open(os.path.join(DB_ROOT_DIR, *db_path)) as f:
-        for item in json.load(f):
-            for value in item.values():
-                try:
-                    if re.search(pattern, value, re_flags):
-                        yield item
-                        break
-                except TypeError:
-                    continue
 
 
 def load_jsons(json_paths: Iterable[str], cls: Optional[type] = None) -> dict:
@@ -661,45 +628,19 @@ def load_from_dir(directory: str) -> Database:
     return Database(antigens=antigens, sera=sera, experiments=experiments)
 
 
-def load(path: tuple[str, ...]) -> "Database":
-    """
-    Load a database from the acorgdb repo.
 
-    Args:
-        path (iterable): Items designate path to 'results.json' from the base
-            directory of the acorgdb repository. E.g.: ('h3n2', 'experiments', 'bjorn7')
-
-    Returns:
-        DataBase
-    """
-    path = tuple(path)
-
-    with open(os.path.join(ROOT_DIR, path[0], "antigens.json")) as f:
-        antigens = tuple(Antigen(a) for a in json.load(f))
-
-    with open(os.path.join(ROOT_DIR, path[0], "sera.json")) as f:
-        sera = tuple(Serum(a) for a in json.load(f))
-
-    with open(os.path.join(ROOT_DIR, *path, "results.json")) as f:
-        experiments = tuple(Experiment(a) for a in json.load(f))
-
-    return Database(antigens=antigens, sera=sera, experiments=experiments)
-
-
-def load_tables(path: tuple[str, ...], index) -> list[pd.DataFrame]:
+def load_tables(directory: str, index) -> list[pd.DataFrame]:
     """
     Load tables from the database.
 
     Args:
-        path (iterable): Items designate path to 'results.json' from the base
-            directory of this repository. E.g.:
-                ('h3n2', 'experiments', 'bjorn7')
+        path (str): Passed to load_from_dir.
         index (int): Top level index into results.json to access.
 
     Returns:
         list containing pd.DataFrame
     """
-    _, _, results = load(path)
+    _, _, results = load_from_dir(directory)
     return [
         pd.DataFrame(table.titers, table.antigen_ids, table.serum_ids)
         for table in results[index].results
