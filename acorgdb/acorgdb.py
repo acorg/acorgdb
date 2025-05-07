@@ -240,6 +240,9 @@ class Antigen(Record):
             if has_subs:
 
                 if sequence_consistent_with_aa1(own_sequence, subs):
+
+                    logging.debug(f"Returning {self.id}'s own {gene} sequence which is consistent with its substitutions")
+
                     return own_sequence
 
                 else:
@@ -694,7 +697,7 @@ def mutate(sequence: str, substitutions: list[str]) -> str:
         return sequence
 
     if not sequence:
-        raise EmptySequenceError
+        raise EmptySequenceError()
 
     sequence = list(sequence)
 
@@ -708,13 +711,9 @@ def mutate(sequence: str, substitutions: list[str]) -> str:
             sequence[index] = aa1
 
         else:
-            sequence = "".join(sequence)
             raise ValueError(
-                f"sequence inconsistent with {substitution}. "
-                f"expected '{aa0}' but find '{sequence[index]}' at {site}:\n"
-                f"(site={site - max(0, site - 5)})"
-                f"{sequence[max(0, index - 5) : min(len(sequence), index + 6)]}"
-                f"(site={site + min(len(sequence), site + 3)})\n"
+                f"Sequence inconsistent with {substitution}. Expected '{aa0}' but find "
+                f"'{sequence[index]}' at {site}."
             )
 
     return "".join(sequence)
