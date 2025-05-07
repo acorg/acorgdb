@@ -378,17 +378,17 @@ class Antigen(Record):
                         a(f"<strong>{k}:</strong> {repr(v)}")
 
             if "parent_id" in self._data:
-                expandable_html(
-                    label=f"<strong>parent_id:</strong> {self.parent.id}",
-                    content=self.parent._repr_html_(),
-                    a=a,
-                )
+
+                with a.li():
+                    a(f"<strong>parent_id:</strong> {self.parent_id}")
+
+                expandable_html(label="", content=self.parent._repr_html_(), a=a)
 
         return str(a)
 
 
 def expandable_html(label: str, content: str, a: Airium) -> str:
-    with a.details():
+    with a.details(style="margin-left:2em;"):
         with a.summary():
             a(label)
         with a.p():
