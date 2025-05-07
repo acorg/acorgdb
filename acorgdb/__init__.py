@@ -21,7 +21,13 @@ from .acorgdb import (
     MissingSequenceError,
 )
 
-__version__ = "0.1.0"
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("acorgdb")
+except PackageNotFoundError:
+    pass
+
 
 __all__ = [
     "__version__",
