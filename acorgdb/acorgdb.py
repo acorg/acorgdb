@@ -178,7 +178,7 @@ class Antigen(Record):
         """
         try:
             self.parent.sequence(gene_name)
-        except (TypeError, AttributeError):
+        except (TypeError, AttributeError, ValueError):
             return False
         else:
             return True
@@ -291,7 +291,7 @@ class Antigen(Record):
 
                 return mutate(parent.sequence(gene), subs)
 
-            elif not has_alt_parent_with_seq and not has_parent_with_seq:
+            elif not (has_alt_parent_with_seq or has_parent_with_seq):
 
                 raise ValueError(f"{self.id} doesn't have a parent with a sequence")
 

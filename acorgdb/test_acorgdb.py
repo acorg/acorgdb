@@ -261,6 +261,76 @@ class TestAntigenSequence(unittest.TestCase):
         with self.assertRaises(adb.MixedPopulationSubstitutionError):
             ag.sequence("HA")
 
+    def test_has_alt_parent_with_seq_positive(self):
+        """
+        Positive test case for Antigen.has_alt_parent_with_seq
+        """
+        Antigen({"id": "parent"})
+        Antigen({"id": "alt_parent", "genes": [{"gene": "HA", "sequence": "QNPS"}]})
+        ag = Antigen(
+            {
+                "id": "child",
+                "parent_id": "parent",
+                "alterations": [
+                    {"gene": "HA", "parent_id": "alt_parent", "substitutions": ["N2K"]}
+                ],
+            }
+        )
+        self.assertTrue(ag.has_alt_parent_with_seq("HA"))
+
+    def test_has_alt_parent_with_seq_negative(self):
+        """
+        Negative test case for Antigen.has_alt_parent_with_seq
+        """
+        Antigen({"id": "parent"})
+        ag = Antigen({"id": "child", "parent_id": "parent"})
+        self.assertFalse(ag.has_alt_parent_with_seq("HA"))
+
+    def test_has_parent_with_seq_positive(self):
+        """
+        Positive test case for Antigen.has_parent_with_seq
+        """
+        Antigen({"id": "parent", "genes": [{"gene": "HA", "sequence": "QNPS"}]})
+        ag = Antigen({"id": "child", "parent_id": "parent"})
+        self.assertTrue(ag.has_parent_with_seq("HA"))
+
+    def test_has_parent_with_seq_negative(self):
+        """
+        Negative test case for Antigen.has_parent_with_seq
+        """
+        Antigen({"id": "parent"})
+        Antigen({"id": "alt_parent", "genes": [{"gene": "HA", "sequence": "QNPS"}]})
+        ag = Antigen(
+            {
+                "id": "child",
+                "parent_id": "parent",
+                "alterations": [
+                    {"gene": "HA", "parent_id": "alt_parent", "substitutions": ["N2K"]}
+                ],
+            }
+        )
+        self.assertFalse(ag.has_parent_with_seq("HA"))
+
+    def test_has_parent_without_sequence_but_alt_parent_with_sequence(self):
+        """
+        In cases where a parent is present (but doesn't have a sequence) and an
+        alteration parent is also present (that does have a a sequence), the
+        alteration parent should be used for generating a sequence.
+        """
+        Antigen({"id": "parent"})
+        Antigen({"id": "alt_parent", "genes": [{"gene": "HA", "sequence": "QNPS"}]})
+        ag = Antigen(
+            {
+                "id": "child",
+                "parent_id": "parent",
+                "alterations": [
+                    {"gene": "HA", "parent_id": "alt_parent", "substitutions": ["N2K"]}
+                ],
+            }
+        )
+        self.assertTrue(ag.has_alt_parent_with_seq("HA"))
+        self.assertEqual("QKPS", ag.sequence("HA"))
+
 
 class TestAntigenSequenceParentSpecifiedInAlterations(unittest.TestCase):
     """
