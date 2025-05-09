@@ -341,10 +341,18 @@ class Antigen(Record):
         except AttributeError:
             return None
 
-    def _repr_html_(self):
+    def _repr_html_(self, seen=None):
         """
         HTML view of the antigen with expandable hierarchy.
+
+        Args:
+            seen (set): A set of ids that have already been seen. This is used to
+                prevent infinite loops if antigens have circular ancestries.
         """
+        seen = set() if seen is None else seen
+
+        seen.add(self.id)
+
         a = Airium()
 
         with a.h4():
@@ -362,16 +370,32 @@ class Antigen(Record):
 
                     with a.ul(style="list-style-type:none;"):
                         for alteration in v:
+
                             with a.li():
 
                                 if "parent_id" in alteration:
                                     alt_id = alteration["parent_id"]
-                                    alt_parent = self._instances[alt_id]
-                                    expandable_html(
-                                        label=repr(alteration),
-                                        content=alt_parent._repr_html_(),
-                                        a=a,
-                                    )
+
+                                    # Keep track of which alt_ids have been seen
+                                    # so we avoid infinite loops
+                                    if alt_id not in seen:
+                                        alt_parent = self._instances[alt_id]
+                                        expandable_html(
+                                            label=repr(alteration),
+                                            content=alt_parent._repr_html_(seen=seen),
+                                            a=a,
+                                        )
+                                        seen.add(alt_id)
+
+                                    else:
+                                        with a.p():
+                                            a((repr(alteration)))
+                                        with a.p():
+                                            a(
+                                                f"<strong>WARNING loop created</strong> "
+                                                f"({alt_id} seen before)"
+                                            )
+
                                 else:
                                     a(repr(alteration))
 
@@ -382,10 +406,20 @@ class Antigen(Record):
 
             if "parent_id" in self._data:
 
-                with a.li():
-                    a(f"<strong>parent_id:</strong> {self.parent_id}")
+                if self.parent_id not in seen:
 
-                expandable_html(label="", content=self.parent._repr_html_(), a=a)
+                    with a.li():
+                        a(f"<strong>parent_id:</strong> {self.parent_id}")
+
+                    expandable_html(
+                        label="", content=self.parent._repr_html_(seen=seen), a=a
+                    )
+
+                    seen.add(self.parent_id)
+
+                else:
+                    with a.p():
+                        a(f"<strong>WARNING loop created</strong> ({self.parent_id} seen before)")
 
         return str(a)
 
