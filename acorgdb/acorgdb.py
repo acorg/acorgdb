@@ -241,7 +241,9 @@ class Antigen(Record):
 
                 if sequence_consistent_with_aa1(own_sequence, subs):
 
-                    logging.debug(f"Returning {self.id}'s own {gene} sequence which is consistent with its substitutions")
+                    logging.debug(
+                        f"Returning {self.id}'s own {gene} sequence which is consistent with its substitutions"
+                    )
 
                     return own_sequence
 
@@ -419,7 +421,9 @@ class Antigen(Record):
 
                 else:
                     with a.p():
-                        a(f"<strong>WARNING loop created</strong> ({self.parent_id} seen before)")
+                        a(
+                            f"<strong>WARNING loop created</strong> ({self.parent_id} seen before)"
+                        )
 
         return str(a)
 
@@ -494,13 +498,30 @@ class Result(Record):
 
     @property
     def titers_long(self):
-        return (
+        df = (
             pd.melt(
                 self.titers, ignore_index=False, var_name="serum", value_name="titer"
             )
             .eval(f"file = '{self.file}'")
             .reset_index()
         )
+
+        has_comma_mask = df["titer"].str.contains(",")
+
+        if not has_comma_mask.any():
+            return df
+
+        else:
+            df_with_comma = df[has_comma_mask].copy()
+            df_without_comma = df[~has_comma_mask].copy()
+
+            # .split makes comma delimited elements in titer into lists .explode
+            # puts each element in the lists into a new row (duplicating values
+            # in other columns)
+            df_with_comma["titer"] = df_with_comma["titer"].str.split(",")
+            df_with_comma = df_with_comma.explode("titer")
+
+            return pd.concat([df_without_comma, df_with_comma])
 
 
 class Experiment(Record):
