@@ -241,7 +241,9 @@ class Antigen(Record):
 
                 if sequence_consistent_with_aa1(own_sequence, subs):
 
-                    logging.debug(f"Returning {self.id}'s own {gene} sequence which is consistent with its substitutions")
+                    logging.debug(
+                        f"Returning {self.id}'s own {gene} sequence which is consistent with its substitutions"
+                    )
 
                     return own_sequence
 
@@ -419,7 +421,9 @@ class Antigen(Record):
 
                 else:
                     with a.p():
-                        a(f"<strong>WARNING loop created</strong> ({self.parent_id} seen before)")
+                        a(
+                            f"<strong>WARNING loop created</strong> ({self.parent_id} seen before)"
+                        )
 
         return str(a)
 
@@ -566,6 +570,30 @@ class Database:
     def __getitem__(self, item):
         return self._by_id[item]
 
+    @classmethod
+    def from_dir(cls, directory: str) -> "Database":
+        """
+        Load a database from any directory.
+
+        Args:
+            directory (str): The directory should contain 'antigens.json',
+                'sera.json' and 'results.json' files in the same format as the
+                acorgdb repo.
+
+        Returns:
+            Database
+        """
+        with open(os.path.join(directory, "antigens.json")) as f:
+            antigens = tuple(Antigen(a) for a in json.load(f))
+
+        with open(os.path.join(directory, "sera.json")) as f:
+            sera = tuple(Serum(a) for a in json.load(f))
+
+        with open(os.path.join(directory, "results.json")) as f:
+            experiments = tuple(Experiment(a) for a in json.load(f))
+
+        return cls(antigens=antigens, sera=sera, experiments=experiments)
+
     @property
     def titers_long(self) -> pd.DataFrame:
         """
@@ -669,26 +697,7 @@ def load_jsons(json_paths: Iterable[str], cls: Optional[type] = None) -> dict:
 
 
 def load_from_dir(directory: str) -> Database:
-    """
-    Load a database from any directory.
-
-    Args:
-        path (iterable): The directory  should contain 'antigens.json',
-            'sera.json' and 'results.json' files in the same format as the acorgdb repo.
-
-    Returns:
-        Database
-    """
-    with open(os.path.join(directory, "antigens.json")) as f:
-        antigens = tuple(Antigen(a) for a in json.load(f))
-
-    with open(os.path.join(directory, "sera.json")) as f:
-        sera = tuple(Serum(a) for a in json.load(f))
-
-    with open(os.path.join(directory, "results.json")) as f:
-        experiments = tuple(Experiment(a) for a in json.load(f))
-
-    return Database(antigens=antigens, sera=sera, experiments=experiments)
+    raise NotImplementedError("this is now Database.from_dir")
 
 
 def load_tables(directory: str, index) -> list[pd.DataFrame]:
