@@ -6,8 +6,7 @@ This module provides easy access to the database in python.
 
 ## Install
 
-Clone and cd into `acorg/acorgdb` then `pip install .` (`pip install -e .[dev]`
-if you want to make changes.)
+`pip install acorgdb`
 
 ## Example usage
 
