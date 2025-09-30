@@ -285,7 +285,13 @@ class Antigen(Record):
                     f"with: {subs}"
                 )
 
-                return mutate(alt_parent.sequence(gene), subs)
+                try:
+                    return mutate(alt_parent.sequence(gene), subs)
+                except ValueError as err:
+                    raise ValueError(
+                        f"Error generating {gene} sequence for {self.id} from alt parent "
+                        f"{alt_parent.id} with: {subs}"
+                    ) from err
 
             elif has_parent_with_seq and has_subs:
 
@@ -294,7 +300,13 @@ class Antigen(Record):
                     f"{subs}"
                 )
 
-                return mutate(parent.sequence(gene), subs)
+                try:
+                    return mutate(parent.sequence(gene), subs)
+                except ValueError as err:
+                    raise ValueError(
+                        f"Error generating {gene} sequence for {self.id} from parent "
+                        f"{parent.id} with: {subs}"
+                    ) from err
 
             elif not (has_alt_parent_with_seq or has_parent_with_seq):
 
@@ -311,7 +323,13 @@ class Antigen(Record):
                         f"from that of its alt_parent: {alt_parent.id}"
                     )
 
-                    return alt_parent.sequence(gene)
+                    try:
+                        return alt_parent.sequence(gene)
+                    except ValueError as err:
+                        raise ValueError(
+                            f"Error getting {gene} sequence for {self.id} from alt parent "
+                            f"{alt_parent.id}"
+                        ) from err
 
                 else:
 
@@ -320,7 +338,13 @@ class Antigen(Record):
                         f"{gene} sequence was taken directly its parent: {parent.id}"
                     )
 
-                    return parent.sequence(gene)
+                    try:
+                        return parent.sequence(gene)
+                    except ValueError as err:
+                        raise ValueError(
+                            f"Error getting {gene} sequence for {self.id} from parent "
+                            f"{parent.id}"
+                        ) from err
 
             else:
                 raise CantGenerateSequenceError()
