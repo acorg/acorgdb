@@ -1,5 +1,7 @@
 # acorgdb
 
+[![tests](https://github.com/acorg/acorgdb/actions/workflows/run-tests.yml/badge.svg)](https://github.com/acorg/acorgdb/actions/workflows/run-tests.yml)
+
 Acorg antigen, antisera and titration databases.
 
 This module provides easy access to the database in python.
