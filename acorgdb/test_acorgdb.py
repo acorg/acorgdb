@@ -25,6 +25,31 @@ class TestMutate(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Sequence inconsistent with K3P."):
             adb.mutate("ACTGN", ["K3P"])
 
+    def test_mutate_with_ignore_sites_after_a(self):
+        self.assertEqual(
+            "NTTRG", adb.mutate("NKTRG", ["K2T", "G5P"], ignore_sites_after=4)
+        )
+
+    def test_mutate_with_ignore_sites_after_b(self):
+        self.assertEqual("NKTRG", adb.mutate("NKTRG", ["G5P"], ignore_sites_after=4))
+
+    def test_mutate_with_mixed_substitutions(self):
+        with self.assertRaises(adb.MixedPopulationSubstitutionError):
+            adb.mutate("ACTGN", ["K3K-P"])
+
+    def test_mutate_with_invalid_format(self):
+        with self.assertRaises(adb.SubstitutionFormatError):
+            adb.mutate("ACTGN", ["K3K"])
+
+    def test_mutate_sequence_shorter_than_site(self):
+        with self.assertRaisesRegex(IndexError, "list index out of range"):
+            adb.mutate("ACT", ["G5P"])
+
+    def test_mutate_case_sensitivity(self):
+        # Substitution characters should be case sensitive
+        with self.assertRaisesRegex(ValueError, "Sequence inconsistent with k2T."):
+            adb.mutate("NKTRG", ["k2T"])
+
 
 class TestAntigenSequence(unittest.TestCase):
 
@@ -170,7 +195,10 @@ class TestAntigenSequence(unittest.TestCase):
             {
                 "id": "grandparent",
                 "genes": [
-                    {"gene": "HA", "sequence": "WSYIVEKINPANDLCYPGNFNDYEELKHLLSR"}
+                    {
+                        "gene": "HA",
+                        "sequence": "WSYIVEKINPANDLCYPGNFNDYEELKHLLSR",
+                    }
                 ],
                 "wildtype": False,
             }
@@ -203,9 +231,7 @@ class TestAntigenSequence(unittest.TestCase):
             {
                 "id": "child",
                 "genes": [{"gene": "HA", "sequence": "DQICIGYHANNSTEQVQTIME"}],
-                "alterations": [
-                    {"gene": "HA", "substitutions": ["K1D", "T6G", "D21E"]}
-                ],
+                "alterations": [{"gene": "HA", "substitutions": ["K1D", "T6G", "D21E"]}],
                 "wildtype": False,
             }
         )
@@ -222,9 +248,7 @@ class TestAntigenSequence(unittest.TestCase):
             {
                 "id": "child",
                 "genes": [{"gene": "HA", "sequence": "DQICIGYHANNSTEQVQTIME"}],
-                "alterations": [
-                    {"gene": "HA", "substitutions": ["K1D", "T6G", "D21K"]}
-                ],
+                "alterations": [{"gene": "HA", "substitutions": ["K1D", "T6G", "D21K"]}],
                 "wildtype": False,
             }
         )
@@ -268,7 +292,11 @@ class TestAntigenSequence(unittest.TestCase):
                 "id": "child",
                 "parent_id": "parent",
                 "alterations": [
-                    {"gene": "HA", "parent_id": "alt_parent", "substitutions": ["N2K"]}
+                    {
+                        "gene": "HA",
+                        "parent_id": "alt_parent",
+                        "substitutions": ["N2K"],
+                    }
                 ],
             }
         )
@@ -301,7 +329,11 @@ class TestAntigenSequence(unittest.TestCase):
                 "id": "child",
                 "parent_id": "parent",
                 "alterations": [
-                    {"gene": "HA", "parent_id": "alt_parent", "substitutions": ["N2K"]}
+                    {
+                        "gene": "HA",
+                        "parent_id": "alt_parent",
+                        "substitutions": ["N2K"],
+                    }
                 ],
             }
         )
@@ -320,7 +352,11 @@ class TestAntigenSequence(unittest.TestCase):
                 "id": "child",
                 "parent_id": "parent",
                 "alterations": [
-                    {"gene": "HA", "parent_id": "alt_parent", "substitutions": ["N2K"]}
+                    {
+                        "gene": "HA",
+                        "parent_id": "alt_parent",
+                        "substitutions": ["N2K"],
+                    }
                 ],
             }
         )
@@ -399,7 +435,12 @@ class TestAntigenSequenceParentSpecifiedInAlterations(unittest.TestCase):
         """
         If the alterations field lacks a parent_id then use the main parent id.
         """
-        Antigen({"id": "parent", "genes": [{"gene": "HA", "sequence": "QRSTUVWXYZ"}]})
+        Antigen(
+            {
+                "id": "parent",
+                "genes": [{"gene": "HA", "sequence": "QRSTUVWXYZ"}],
+            }
+        )
 
         child = Antigen(
             {
@@ -418,7 +459,10 @@ class TestAntigenSequenceParentSpecifiedInAlterations(unittest.TestCase):
         with a sequence).
         """
         Antigen(
-            {"id": "main_parent", "genes": [{"gene": "HA", "sequence": "QRSTUVWXYZ"}]}
+            {
+                "id": "main_parent",
+                "genes": [{"gene": "HA", "sequence": "QRSTUVWXYZ"}],
+            }
         )
         Antigen({"id": "alt_parent"})
         child = Antigen(
@@ -492,9 +536,7 @@ class TestAntigen(unittest.TestCase):
         If an antigen has a parent_id that doesn't exist in Records._instances, a
         MissingParentError should be raised.
         """
-        ag = Antigen(
-            {"id": "AGTEST3", "parent_id": "AGTEST3_PARENT", "wildtype": False}
-        )
+        ag = Antigen({"id": "AGTEST3", "parent_id": "AGTEST3_PARENT", "wildtype": False})
         with self.assertRaises(adb.MissingRecordError):
             ag.parent
 

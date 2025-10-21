@@ -24,6 +24,7 @@ dependencies = [
     "pandas",
     "regex",
     "pyyaml",
+    "pytest>=7.4.4",
 ]
 
 [project.urls]

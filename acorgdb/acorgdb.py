@@ -213,19 +213,23 @@ class Antigen(Record):
         else:
             return True
 
-    def sequence(self, gene: str = "HA") -> str:
+    def sequence(self, gene: str = "HA", mutate_kwds: Optional[dict] = None) -> str:
         """
         The antigen's sequence. If the antigen does not directly have it's own sequence,
         then one is generated form parent sequences plus any substitutions.
 
         Args:
             gene_name (str): The name of the gene_name. Defaults to "HA".
+            mutate_kwds (dict, optional): Additional keyword arguments to pass
+                to `mutate`.
 
         Returns:
-            str: The sequence of the gene_name.
+            str: The sequence of gene_name.
         """
 
         gene = gene.upper()
+
+        mutate_kwds = mutate_kwds or {}
 
         own_sequence = self._own_sequence(gene)
         subs = self.substitutions(gene)
@@ -249,7 +253,7 @@ class Antigen(Record):
 
                 else:
                     try:
-                        return mutate(own_sequence, subs)
+                        return mutate(own_sequence, subs, **mutate_kwds)
 
                     except ValueError as err:
                         raise ValueError(
@@ -286,7 +290,7 @@ class Antigen(Record):
                 )
 
                 try:
-                    return mutate(alt_parent.sequence(gene), subs)
+                    return mutate(alt_parent.sequence(gene), subs, **mutate_kwds)
                 except ValueError as err:
                     raise ValueError(
                         f"Error generating {gene} sequence for {self.id} from alt parent "
@@ -301,7 +305,7 @@ class Antigen(Record):
                 )
 
                 try:
-                    return mutate(parent.sequence(gene), subs)
+                    return mutate(parent.sequence(gene), subs, **mutate_kwds)
                 except ValueError as err:
                     raise ValueError(
                         f"Error generating {gene} sequence for {self.id} from parent "
@@ -438,7 +442,9 @@ class Antigen(Record):
                         a(f"<strong>parent_id:</strong> {self.parent_id}")
 
                     expandable_html(
-                        label="", content=self.parent._repr_html_(seen=seen), a=a
+                        label="",
+                        content=self.parent._repr_html_(seen=seen),
+                        a=a,
                     )
 
                     seen.add(self.parent_id)
@@ -502,7 +508,10 @@ class Result(Record):
             antigens ({}): {}
             sera ({}): {}
         )""".format(
-            len(self.antigen_ids), self.antigen_ids, len(self.serum_ids), self.serum_ids
+            len(self.antigen_ids),
+            self.antigen_ids,
+            len(self.serum_ids),
+            self.serum_ids,
         )
 
     def __getattr__(self, name):
@@ -524,7 +533,10 @@ class Result(Record):
     def titers_long(self):
         df = (
             pd.melt(
-                self.titers, ignore_index=False, var_name="serum", value_name="titer"
+                self.titers,
+                ignore_index=False,
+                var_name="serum",
+                value_name="titer",
             )
             .eval(f"file = '{self.file}'")
             .reset_index()
@@ -759,7 +771,11 @@ def load_tables(directory: str, index) -> list[pd.DataFrame]:
     ]
 
 
-def mutate(sequence: str, substitutions: list[str]) -> str:
+def mutate(
+    sequence: str,
+    substitutions: list[str],
+    ignore_sites_after: Optional[int] = None,
+) -> str:
     """
     Mutates a given sequence based on a list of substitutions.
 
@@ -768,6 +784,8 @@ def mutate(sequence: str, substitutions: list[str]) -> str:
         substitutions (list[str]): A list of substitutions in the format "XnY",
             where X is the character to be replaced, n is the site index (1-based),
             and Y is the character to replace with.
+        ignore_sites_after (int): If provided, substitutions at sites
+            after this value will be ignored (1-based).
 
     Returns:
         str: The mutated sequence.
@@ -788,6 +806,10 @@ def mutate(sequence: str, substitutions: list[str]) -> str:
     for substitution in substitutions:
 
         aa0, site, aa1 = substitution_components(substitution)
+
+        if ignore_sites_after is not None and site > ignore_sites_after:
+            continue
+
         index = site - 1
 
         # Sequence has the old amino acid, so update it
