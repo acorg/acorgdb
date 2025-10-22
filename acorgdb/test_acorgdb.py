@@ -582,5 +582,52 @@ class TestGetSubsInName(unittest.TestCase):
         self.assertEqual(expect, adb.get_subs_in_name(name))
 
 
+class TestDatabase(unittest.TestCase):
+    def setUp(self):
+        """
+        New _instances dictionary so that tests are independent of each other.
+        """
+        antigens = [
+            adb.Antigen({"id": "ag1", "wildtype": True}),
+            adb.Antigen({"id": "ag2", "wildtype": True}),
+        ]
+
+        sera = [
+            adb.Serum({"id": "serum1", "strain_id": "ag1"}),
+            adb.Serum({"id": "serum2", "strain_id": "ag2"}),
+        ]
+
+        experiments = [
+            adb.Experiment(
+                {
+                    "id": "exp1",
+                    "name": "exp1",
+                    "description": "exp1",
+                    "results": [
+                        {
+                            "antigen_ids": ["ag1", "ag2"],
+                            "serum_ids": ["serum1", "serum2"],
+                            "titers": [[10, 20], [30, 40]],
+                        }
+                    ],
+                }
+            )
+        ]
+
+        self.db = adb.Database(antigens=antigens, sera=sera, experiments=experiments)
+
+    def test_contains_antigen(self):
+        self.assertIn("ag1", self.db)
+
+    def test_contains_serum(self):
+        self.assertIn("serum1", self.db)
+
+    def test_contains_experiment(self):
+        self.assertIn("exp1", self.db)
+
+    def test_not_contains(self):
+        self.assertNotIn("foo", self.db)
+
+
 if __name__ == "__main__":
     unittest.main()

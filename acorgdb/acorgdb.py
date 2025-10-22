@@ -606,7 +606,7 @@ class Database:
         antigens: Iterable[Antigen],
         sera: Iterable[Serum],
         experiments: Iterable[Experiment],
-    ):
+    ) -> None:
 
         self.antigens = antigens
         self.sera = sera
@@ -615,13 +615,16 @@ class Database:
         for item in *antigens, *sera, *experiments:
             self._by_id[item.id] = item
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "DataBase({}, {}, {})".format(
             repr(self.antigens), repr(self.sera), repr(self.experiments)
         )
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> Experiment | Antigen | Serum:
         return self._by_id[item]
+
+    def __contains__(self, item: str) -> bool:
+        return item in self._by_id
 
     @classmethod
     def from_dir(cls, directory: str) -> "Database":
