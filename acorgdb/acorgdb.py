@@ -59,6 +59,9 @@ class FrozenJSON:
     def __repr__(self):
         return "FrozenJSON({})".format(repr(self._data))
 
+    def __str__(self):
+        return str(self._data)
+
     def __getattr__(self, name):
         if hasattr(self._data, name):  # handles calls to .keys etc...
             return getattr(self._data, name)
@@ -70,6 +73,9 @@ class FrozenJSON:
 
     def __dir__(self):
         return list(self._data.keys())
+
+    def __contains__(self, item):
+        return item in self._data
 
     @classmethod
     def build(cls, obj):
