@@ -603,7 +603,7 @@ class Experiment(Record):
         return (
             pd.concat(
                 [
-                    result.titers_long.assign(table_number=i)
+                    result.titers_long.assign(table_id=f"{self.id}.{i}")
                     for i, result in enumerate(self.results)
                 ]
             )
