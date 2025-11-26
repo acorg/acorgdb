@@ -597,11 +597,17 @@ class Experiment(Record):
     @property
     def titers_long(self) -> pd.DataFrame:
         """
-        Concatenate titer tables in long format. Tables are joined top to bottom.
+        Concatenate titer tables in long format. Tables are joined top to
+        bottom.
         """
         return (
-            pd.concat(result.titers_long for result in self.results)
-            .eval(f"experiment_id = '{self.id}'")
+            pd.concat(
+                [
+                    result.titers_long.assign(table_number=i)
+                    for i, result in enumerate(self.results)
+                ]
+            )
+            .assign(experiment_id=self.id)
             .reset_index(drop=True)
         )
 
